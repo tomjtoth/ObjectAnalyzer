@@ -1,7 +1,7 @@
+
 ObjAn2(obj) {
-	txt := "", lvl := 0
+	txt := ""
 	__recurse(o) {
-		++lvl
 		if isobject(o) {
 			txt .= "{"
 			if o.HasProp("__item") {
@@ -14,9 +14,11 @@ ObjAn2(obj) {
 					close := "]"
 				}
 				txt .= open
-				if !o.HasMethod("__enum")
-					return
-				for k, v in o {
+				for k, v in (
+					o.Hasownprop("__item")
+					? o
+					: o
+				) {
 					txt .= a_index > 1 ? "," : ""
 					if open = "map(" {
 						__recurse(k)
@@ -26,13 +28,8 @@ ObjAn2(obj) {
 				}
 				txt .= close
 			}
-			txt .= ObjOwnPropCount(o) ? "," : ""
 			for k, v in o.OwnProps() {
-				txt .= (
-					a_index > 1
-					? ","
-					: ""
-				) k ":"
+				txt .= "," k ":"
 				__recurse(v)
 			}
 			txt .= "}"
@@ -47,7 +44,6 @@ ObjAn2(obj) {
 				, "`"", "```"")
 				. "`""
 		}
-		--lvl
 	}
 	__recurse(obj)
 	a_clipboard := "msgbox(objan2(" txt "))"
