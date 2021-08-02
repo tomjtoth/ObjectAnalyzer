@@ -1,4 +1,4 @@
-ObjAn(obj, verbosity := 0) { ; https://github.com/tomjtoth/ObjectAnalyzer
+ObjAn2(obj, verbosity := 0) { ; https://github.com/tomjtoth/ObjectAnalyzer
 	text := ""
 	if verbosity > 0
 		ind := 0
@@ -9,6 +9,8 @@ ObjAn(obj, verbosity := 0) { ; https://github.com/tomjtoth/ObjectAnalyzer
 	}
 
 	__recurse(&o, parent := 0) {
+		if !isset(o)
+			return
 		if isobject(o) {
 			text .= "{ "
 			if verbosity > 0
@@ -48,13 +50,13 @@ ObjAn(obj, verbosity := 0) { ; https://github.com/tomjtoth/ObjectAnalyzer
 						verbosity > 1
 						? tv.add("[" (
 							isobject(key)
-							? format("0x{:X}", ObjPtr(key))
+							? "object at " format("0x{:X}", ObjPtr(key))
 							: (
 								isnumber(key)
 								? key
 								: "`"" key "`""
 							)
-						) "]", parent, "Icon3")
+						) "]", parent, "icon3")
 						: ""
 					))
 					text .= (
@@ -91,7 +93,7 @@ ObjAn(obj, verbosity := 0) { ; https://github.com/tomjtoth/ObjectAnalyzer
 				) key ": "
 					__recurse(&value, (
 						verbosity > 1
-						? tv.add(key, parent, "Icon2")
+						? tv.add(key, parent, "icon2")
 						: ""
 					))
 				text .= (
@@ -151,11 +153,10 @@ ObjAn(obj, verbosity := 0) { ; https://github.com/tomjtoth/ObjectAnalyzer
 		g.Show
 
 	if (verbosity = 1) { ; debugging
-		f := Fileopen(filepath := a_temp "\objan.txt", "w")
+		f := Fileopen(filepath := a_temp "\" a_now "_objan.txt", "w")
 		f.write(text)
 		f.Close()
-		run filepath 
-		a_clipboard := text
+		run filepath
 	}
 	return text
 }
