@@ -1,4 +1,4 @@
-ObjAn2(obj, verbosity := 0) { ; https://github.com/tomjtoth/ObjectAnalyzer
+ObjAn(obj, verbosity := 0) { ; https://github.com/tomjtoth/ObjectAnalyzer
 	text := ""
 	if verbosity > 0
 		ind := 0
@@ -8,7 +8,7 @@ ObjAn2(obj, verbosity := 0) { ; https://github.com/tomjtoth/ObjectAnalyzer
 			return  "`n" Replicate(A_Tab , ind - 1 + diff)
 	}
 
-	__recurse(&o, parent := 0) {
+	__recurse(&o, parent := 0, add_to_TV := true) {
 		if !isset(o)
 			return
 		if isobject(o) {
@@ -43,11 +43,11 @@ ObjAn2(obj, verbosity := 0) { ; https://github.com/tomjtoth/ObjectAnalyzer
 				for key, value in enum {
 					text .= __pad(1)
 					if enum.__class = "Map" {
-						__recurse(&key)
+						__recurse(&key,, false)
 						text .= ", "
 					}
 					__recurse(&value, (
-						verbosity > 1
+						(verbosity > 1) && add_to_TV
 						? tv.add("[" (
 							isobject(key)
 							? "object at " format("0x{:X}", ObjPtr(key))
@@ -58,7 +58,7 @@ ObjAn2(obj, verbosity := 0) { ; https://github.com/tomjtoth/ObjectAnalyzer
 							)
 						) "]", parent, "icon3")
 						: ""
-					))
+					), add_to_TV)
 					text .= (
 						a_index < (
 							enum.__class = "Array"
@@ -92,10 +92,10 @@ ObjAn2(obj, verbosity := 0) { ; https://github.com/tomjtoth/ObjectAnalyzer
 					: 1
 				) key ": "
 					__recurse(&value, (
-						verbosity > 1
+						(verbosity > 1) && add_to_TV
 						? tv.add(key, parent, "icon2")
 						: ""
-					))
+					), add_to_TV)
 				text .= (
 					a_index < ObjOwnPropCount(o)
 					? ", "
@@ -147,12 +147,14 @@ ObjAn2(obj, verbosity := 0) { ; https://github.com/tomjtoth/ObjectAnalyzer
 		tv := g.add("treeview","w1024 h600 ImageList" icons)
 	}
 
-	; starting to work here
+	; point of entry here
 	__recurse(&obj)
+
+	; 
 	if verbosity = 2
 		g.Show
 
-	if (verbosity = 1) { ; debugging
+	if (verbosity = 1) {
 		f := Fileopen(filepath := a_temp "\" a_now "_objan.txt", "w")
 		f.write(text)
 		f.Close()
