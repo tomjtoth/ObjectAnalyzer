@@ -1,4 +1,4 @@
-Replicate( Str, Count ) { ; By SKAN / CD: 01-July-2017 | goo.gl/U84K7J
+﻿Replicate( Str, Count ) { ; By SKAN / CD: 01-July-2017 | goo.gl/U84K7J
 	Return StrReplace( Format( "{:0" Count "}", "" ), 0, Str )
 }
 
@@ -9,10 +9,6 @@ implement right click menu with:
  - expand /..below/
  - collapse /..below/
  - find in branch
-
-get the regex search to work
-create tooltip for it?
-or an about / help menu?
 
  */
  	text := ""
@@ -135,7 +131,7 @@ or an about / help menu?
 				, "`"", "```"")
 				. "`""
 			if verbosity > 1
-				if parent 
+				if parent
 					tv.modify(parent, (
 						instr(parent_text := tv.GetText(parent), "[")
 						? "icon1"
@@ -147,11 +143,12 @@ or an about / help menu?
 
 	; prepping GUI if needed
 	if (verbosity > 1) {
-		cache := Map()
 		results := []
 		icons := IL_Create(3)
 		for i in [2, 69*4+2, 4]
 			IL_Add(icons, "shell32.dll", i)
+		
+		TraySetIcon "shell32.dll", 24
 		g := gui("+Resize +MinSize640x480", "Object Analyzer" (
 			a_scriptname != "main.ahk"
 			? " - " strreplace(a_scriptname, ".ahk")
@@ -161,16 +158,18 @@ or an about / help menu?
 			? " - " title
 			: ""
 		))
+		TraySetIcon A_AhkPath, 1
 		g.setfont("s12")
 		g.OnEvent("size", __resize)
 		;g.add("text",,"Search")
 		chk := g.add("Checkbox",,"RegEx")
 		chk.onevent("Click", __checkbox_click)
+		;chk.GetPos(,,, &chkH)
 		edit := g.add("edit","ym")
 		edit.OnEvent("change", __edit_change)
 		btn1 := g.add("button", "ym", "Find")
 		btn1.OnEvent("Click", __button1_click)
-		btn2 := g.add("button", "ym", "Prev")
+		btn2 := g.add("button", "ym", "↑")
 		btn2.Visible := false
 		btn2.OnEvent("Click", __button2_click)
 		label := g.add("text", "ym w300")
@@ -195,6 +194,7 @@ or an about / help menu?
 	}
 
 	__checkbox_click(cc,*) {
+		__edit_change()
 		cc.GetPos(&x, &y,, &h)
 		tooltip((
 			cc.Value
@@ -207,16 +207,15 @@ or an about / help menu?
 
 	__traverse_TV(item := 0) {
 		loop {
-			if item
+			if item {
 				if chk.value
-				? TV.GetText(item) ~= edit.Value
-				: instr(TV.GetText(item), edit.Value)
-					results.push(item)
-			if child := TV.GetChild(item)
-				__traverse_TV(child)
-			if !(item := tv.GetNext(item))
-				break
-		}
+					? TV.GetText(item) ~= edit.Value
+					: instr(TV.GetText(item), edit.Value)
+						results.push(item)
+				if child := TV.GetChild(item)
+					__traverse_TV(child)
+			}
+		} until !(item := tv.GetNext(item))
 	}
 
 	__search_TV() {
@@ -229,8 +228,12 @@ or an about / help menu?
 	__button1_click(cc,*) {
 		if (cc.text = "Find")
 		&& edit.value {
-			__search_TV()
-			ControlSetText("Next", cc)
+			try __search_TV()
+			catch Error as e {
+				MsgBox(e.message, "Failed to search TV")
+				return
+			}
+			ControlSetText("↓", cc)
 			btn2.visible := true
 			label.visible := true
 		}
@@ -245,7 +248,6 @@ or an about / help menu?
 		ControlSetText(last "/" results.length " results", label)
 	}
 	
-
 	; point of entry here
 	__recurse(&obj)
 
